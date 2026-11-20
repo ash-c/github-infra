@@ -25,6 +25,9 @@ variable "repos" {
     allow_update_branch    = optional(bool, false)
     delete_branch_on_merge = optional(bool, true)
 
+    # Blocks deletion of and force pushes to release/* branches.
+    protect_release_branches = optional(bool, true)
+
     # Protects the default branch. null leaves it unprotected.
     branch_protection = optional(object({
       # Required status check names, e.g. GitHub Actions job names.

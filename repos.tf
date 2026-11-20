@@ -66,3 +66,24 @@ resource "github_branch_protection" "default" {
     }
   }
 }
+
+resource "github_repository_ruleset" "release_branches" {
+  for_each = { for name, repo in var.repos : name => repo if repo.protect_release_branches && !repo.archived }
+
+  name        = "release branches"
+  repository  = github_repository.this[each.key].name
+  target      = "branch"
+  enforcement = "active"
+
+  conditions {
+    ref_name {
+      include = ["refs/heads/release/*"]
+      exclude = []
+    }
+  }
+
+  rules {
+    deletion         = true
+    non_fast_forward = true
+  }
+}
