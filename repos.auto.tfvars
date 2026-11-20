@@ -19,10 +19,12 @@ repos = {
 
   "latlng" = {
     default_branch = "master"
+    archived       = true
   }
 
   "pirategame" = {
     description    = "Repo for final student project."
     default_branch = "master"
+    archived       = true
   }
 }
