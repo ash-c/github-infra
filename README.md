@@ -94,11 +94,15 @@ Rotate before then:
 
 The Netlify provider reads `NETLIFY_API_TOKEN`, which the workflow sets from the **`NETLIFY_TOKEN` Actions secret**: a Netlify personal access token. Every plan and apply needs it, including GitHub-only changes.
 
+> [!IMPORTANT]
+> **The current Netlify token expires on 2027-11-21**, the same day as `GH_TOKEN`. When it expires, every plan and apply fails.
+
 Create or rotate it alongside `GH_TOKEN`:
 
 1. Netlify → User settings → Applications → Personal access tokens → **New access token**. Set an expiry and note it.
 2. `ash-c/github-infra` → Settings → Secrets and variables → Actions → create or update **`NETLIFY_TOKEN`**.
-3. Re-run the latest Terraform workflow (or open a PR) to confirm the plan succeeds, then revoke the old token.
+3. Update the expiry date in this README.
+4. Re-run the latest Terraform workflow (or open a PR) to confirm the plan succeeds, then revoke the old token.
 
 ## State and concurrency
 
@@ -110,6 +114,7 @@ Create or rotate it alongside `GH_TOKEN`:
 ## Bootstrap (done once)
 
 1. Fine-grained PAT created (expires 2027-11-21) and stored as `GH_TOKEN`.
+1. Netlify personal access token created (expires 2027-11-21) and stored as `NETLIFY_TOKEN`.
 2. `github-infra` created in the GitHub UI, since Terraform cannot create the repository it runs from.
 3. First PR added the configuration with `import` blocks for every existing repository. Merging it ran the first apply, which imported them and committed `terraform.tfstate`. The completed import blocks have since been removed.
 
