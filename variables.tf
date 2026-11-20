@@ -23,7 +23,7 @@ variable "repos" {
     allow_rebase_merge     = optional(bool, true)
     allow_auto_merge       = optional(bool, false)
     allow_update_branch    = optional(bool, false)
-    delete_branch_on_merge = optional(bool, false)
+    delete_branch_on_merge = optional(bool, true)
 
     # Protects the default branch. null leaves it unprotected.
     branch_protection = optional(object({
