@@ -1,13 +1,13 @@
 # github-infra
 
-Terraform that manages the GitHub repositories owned by [`ash-c`](https://github.com/ash-c): creation, naming, descriptions, features, merge settings, default branches and branch protection. It manages itself too.
+Terraform that manages the GitHub repositories owned by [`ash-c`](https://github.com/ash-c): creation, naming, descriptions, features, merge settings, default branches, branch protection and release branch rulesets. It manages itself too.
 
 It also manages settings on existing Netlify sites: custom domains and non-secret environment variables.
 
 ## How it works
 
 - Each repository is one entry in [`repos.auto.tfvars`](repos.auto.tfvars). Unset fields use the defaults in [`variables.tf`](variables.tf).
-- [`repos.tf`](repos.tf) creates `github_repository`, `github_branch_default` and (where `branch_protection` is set) `github_branch_protection` for every entry.
+- [`repos.tf`](repos.tf) creates `github_repository`, `github_branch_default`, `github_repository_ruleset.release_branches` (unless `protect_release_branches = false` or archived) and (where `branch_protection` is set) `github_branch_protection` for every entry.
 - Each Netlify site is one entry in [`netlify.auto.tfvars`](netlify.auto.tfvars), keyed by Netlify site name. [`netlify.tf`](netlify.tf) looks the site up and manages `netlify_site_domain_settings` (only where `custom_domain` is set) and one `netlify_environment_variable` per `env_vars` entry. Sites are created in the Netlify UI, and build settings stay in each repository's `netlify.toml`, which overrides build settings set through the API. DNS is not managed.
 - State is the committed [`terraform.tfstate`](terraform.tfstate). There is no remote backend.
 - [`.github/workflows/terraform.yml`](.github/workflows/terraform.yml):
@@ -34,7 +34,7 @@ terraform plan -lock=false
 | --- | --- |
 | New repository | Add an entry to `repos.auto.tfvars`, open a PR, check the plan, merge. It is created with an initial commit on `main`; leave `default_branch` as `main` for new repos (rename the branch on GitHub first if you need another one). |
 | Change settings | Edit the entry. The plan shows the in-place update. |
-| Rename | Change the entry's key and add a `moved` block from `github_repository.this["old"]` to `github_repository.this["new"]` (and the same for `github_branch_default` / `github_branch_protection`). Without it, Terraform plans a new repository and is blocked by `prevent_destroy`. |
+| Rename | Change the entry's key and add a `moved` block from `github_repository.this["old"]` to `github_repository.this["new"]` (and the same for `github_branch_default`, `github_branch_protection` and `github_repository_ruleset.release_branches`). Without it, Terraform plans a new repository and is blocked by `prevent_destroy`. |
 | Bring an existing repository under management | Add its entry and an `import` block in [`imports.tf`](imports.tf). Remove the block after the apply. |
 | Archive | Set `archived = true`. Branch protection is removed for archived repositories. |
 
@@ -58,6 +58,10 @@ Repositories with `branch_protection` get, on their default branch: PR-only chan
 - `portfolio` requires its `check` CI job.
 - `github-infra` requires `plan` and sets `enforce_admins = false`, so the apply job can push the state commit to `main` with the owner's token. This also means the owner can bypass protection here; don't.
 - Branch protection on **private** repositories needs GitHub Pro. All repositories are currently public.
+
+### Release branches
+
+Every repository gets a `release branches` ruleset (`github_repository_ruleset.release_branches`) that blocks deletion of and force pushes to `release/*` branches, so automatic branch deletion after a merge doesn't remove them. Nobody can bypass it: to delete a release branch, set `protect_release_branches = false` on the repository first. Archived repositories are skipped.
 
 ## Netlify
 

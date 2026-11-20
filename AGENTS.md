@@ -17,7 +17,7 @@ Terraform for the `ash-c` GitHub repositories and existing Netlify sites. [READM
 - All infrastructure changes go through pull requests.
 - Never run `terraform apply`, `import`, `state rm`, `state mv` or `taint` locally, and never edit `terraform.tfstate` by hand. CI is the only writer of state.
 - Keep `prevent_destroy = true` and `archive_on_destroy = true` on repositories, and don't weaken existing branch protection.
-- A rename changes the entry's key and needs `moved` blocks for every affected resource (`github_repository`, `github_branch_default`, `github_branch_protection`). Without them the plan tries to replace the repository.
+- A rename changes the entry's key and needs `moved` blocks for every affected resource (`github_repository`, `github_branch_default`, `github_branch_protection`, `github_repository_ruleset.release_branches`). Without them the plan tries to replace the repository.
 - Bring repositories under management and retire them using the README procedures (`import` blocks; archive first, then remove). Don't improvise destructive operations.
 - State is public. Never commit credentials, and don't manage secret values (Actions secrets, deploy keys, webhook secrets, secret Netlify environment variables) through these resources.
 - Authentication uses `GITHUB_TOKEN` and `NETLIFY_API_TOKEN`. Both providers are configured, so every plan needs both, including GitHub-only changes. Don't record token values or expiry dates here; the README tracks expiry.
