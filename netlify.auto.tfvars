@@ -1,5 +1,5 @@
 # Netlify team that owns the sites below.
-netlify_team_slug = "TEAM_SLUG"
+netlify_team_slug = "ash-c"
 
 # One entry per existing Netlify site, keyed by site name. Sites themselves are
 # created in the Netlify UI; build settings live in each repo's netlify.toml.
