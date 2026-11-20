@@ -1,0 +1,21 @@
+# Terraform working directory and local plan files.
+.terraform/
+*.tfplan
+*.tfplan.json
+plan.txt
+
+# terraform.tfstate is committed on purpose (CI is the only writer). Backups and
+# lock files from local runs are not.
+terraform.tfstate.backup
+*.tfstate.*.backup
+.terraform.tfstate.lock.info
+
+# Crash logs and local overrides.
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# .terraform.lock.hcl is committed to pin provider versions and hashes.

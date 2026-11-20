@@ -1,0 +1,143 @@
+name: Terraform
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    # The apply job's own state commit must not trigger another apply.
+    paths-ignore:
+      - terraform.tfstate
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TF_VERSION: 1.17.2
+  TF_IN_AUTOMATION: 'true'
+  TF_INPUT: 'false'
+
+jobs:
+  plan:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+    concurrency:
+      group: plan-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    env:
+      GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive -diff
+
+      - name: terraform init
+        run: terraform init
+
+      - name: terraform validate
+        run: terraform validate -no-color
+
+      - name: terraform plan
+        id: plan
+        run: |
+          set -o pipefail
+          terraform plan -no-color -lock=false 2>&1 | tee plan.txt
+
+      - name: Comment plan on PR
+        if: ${{ always() && steps.plan.outcome != 'skipped' }}
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PLAN_OUTCOME: ${{ steps.plan.outcome }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- terraform-plan -->';
+            const max = 60000;
+            let plan = fs.existsSync('plan.txt') ? fs.readFileSync('plan.txt', 'utf8') : 'No plan output.';
+            if (plan.length > max) {
+              plan = '... (truncated, see the workflow log for the full plan)\n' + plan.slice(-max);
+            }
+            const summary = plan.match(/^(Plan:.*|No changes\..*)$/m)?.[0] ?? `Plan ${process.env.PLAN_OUTCOME}`;
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              marker,
+              `### Terraform plan: ${process.env.PLAN_OUTCOME}`,
+              `**${summary}** ([workflow run](${runUrl}), commit ${context.payload.pull_request.head.sha.slice(0, 7)})`,
+              '<details><summary>Show plan</summary>',
+              '',
+              '```',
+              plan,
+              '```',
+              '</details>',
+            ].join('\n');
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number });
+            const existing = comments.find((c) => c.user.type === 'Bot' && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+
+  apply:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # CI is the only writer of terraform.tfstate: applies run one at a time.
+    concurrency:
+      group: terraform-state
+      cancel-in-progress: false
+    env:
+      GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+    steps:
+      # Check out the tip of main, not the triggering commit, so a queued run
+      # always applies the latest config against the latest committed state.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          token: ${{ secrets.GH_TOKEN }}
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: terraform init
+        id: init
+        run: terraform init
+
+      - name: terraform apply
+        run: terraform apply -auto-approve -no-color
+
+      # Runs even if apply failed: a partial apply still changes state.
+      - name: Commit terraform.tfstate
+        if: ${{ always() && steps.init.outcome == 'success' }}
+        run: |
+          git add terraform.tfstate
+          if git diff --cached --quiet; then
+            echo "State unchanged."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update terraform.tfstate [skip ci]" -m "Applied from ${GITHUB_SHA}, run ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          if ! git push origin HEAD:main; then
+            # main moved during the apply. Only CI writes the state file, so a
+            # rebase is safe; a conflict means something else edited it.
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
