@@ -1,8 +1,8 @@
 # One entry per repository. Adding a repo here (and merging the PR) creates it on GitHub.
 # Removing an entry is blocked by prevent_destroy; see README.md ("Retiring a repository").
 repos = {
-  "cw-website" = {
-    description = "Website for Code Wizardry, my personal website."
+  "portfolio" = {
+    description = "Portfolio website for Ash Crockett, full-stack software engineer in Taranaki, NZ."
     branch_protection = {
       required_checks = ["check"]
     }
