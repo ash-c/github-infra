@@ -39,3 +39,36 @@ variable "repos" {
     error_message = "visibility must be \"public\" or \"private\"."
   }
 }
+
+variable "netlify_team_slug" {
+  description = "Slug of the Netlify team that owns the managed sites (app.netlify.com/teams/<slug>)."
+  type        = string
+}
+
+variable "netlify_sites" {
+  description = "Existing Netlify sites to manage, keyed by Netlify site name. Values live in netlify.auto.tfvars."
+  type = map(object({
+    # null leaves the site's domain settings unmanaged.
+    custom_domain  = optional(string)
+    domain_aliases = optional(list(string), [])
+
+    # Non-secret values only: terraform.tfstate is public.
+    env_vars = optional(map(object({
+      value   = string
+      context = optional(string, "all")
+      # Custom scopes are not supported on the free plan; null uses all scopes.
+      scopes = optional(list(string))
+    })), {})
+  }))
+  default = {}
+
+  validation {
+    condition = alltrue(flatten([
+      for site in values(var.netlify_sites) : [
+        for v in values(site.env_vars) :
+        contains(["all", "production", "deploy-preview", "branch-deploy", "dev", "dev-server"], v.context)
+      ]
+    ]))
+    error_message = "env_vars context must be one of all, production, deploy-preview, branch-deploy, dev, dev-server."
+  }
+}
