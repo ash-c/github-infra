@@ -31,7 +31,7 @@ terraform plan -lock=false
 | New repository | Add an entry to `repos.auto.tfvars`, open a PR, check the plan, merge. It is created with an initial commit on `main`; leave `default_branch` as `main` for new repos (rename the branch on GitHub first if you need another one). |
 | Change settings | Edit the entry. The plan shows the in-place update. |
 | Rename | Change the entry's key and add a `moved` block from `github_repository.this["old"]` to `github_repository.this["new"]` (and the same for `github_branch_default` / `github_branch_protection`). Without it, Terraform plans a new repository and is blocked by `prevent_destroy`. |
-| Bring an existing repository under management | Add its entry and an `import` block in [`imports.tf`](imports.tf). |
+| Bring an existing repository under management | Add its entry and an `import` block in [`imports.tf`](imports.tf). Remove the block after the apply. |
 | Archive | Set `archived = true`. Branch protection is removed for archived repositories. |
 
 ### Retiring a repository
@@ -51,7 +51,7 @@ To stop managing a repository:
 
 Repositories with `branch_protection` get, on their default branch: PR-only changes (0 approvals, since there is one owner), required status checks as listed, and no force pushes or deletion.
 
-- `cw-website` requires its `check` CI job.
+- `portfolio` requires its `check` CI job.
 - `github-infra` requires `plan` and sets `enforce_admins = false`, so the apply job can push the state commit to `main` with the owner's token. This also means the owner can bypass protection here; don't.
 - Branch protection on **private** repositories needs GitHub Pro. All repositories are currently public.
 
@@ -86,7 +86,7 @@ Rotate before then:
 
 1. Fine-grained PAT created (expires 2027-11-21) and stored as `GH_TOKEN`.
 2. `github-infra` created in the GitHub UI, since Terraform cannot create the repository it runs from.
-3. First PR added the configuration with `import` blocks for every existing repository. Merging it ran the first apply, which imported them and committed `terraform.tfstate`.
+3. First PR added the configuration with `import` blocks for every existing repository. Merging it ran the first apply, which imported them and committed `terraform.tfstate`. The completed import blocks have since been removed.
 
 ## Decisions
 
