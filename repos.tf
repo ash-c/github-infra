@@ -21,11 +21,17 @@ resource "github_repository" "this" {
   allow_update_branch    = each.value.allow_update_branch
   delete_branch_on_merge = each.value.delete_branch_on_merge
 
+  # New repositories get an initial commit on GitHub's default branch (main),
+  # so github_branch_default has a branch to point at.
+  auto_init = true
+
   # If a destroy ever does run, archive the repository instead of deleting it.
   archive_on_destroy = true
 
   lifecycle {
     prevent_destroy = true
+    # auto_init only matters at creation; imported repositories read it as false.
+    ignore_changes = [auto_init]
   }
 }
 

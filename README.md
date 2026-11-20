@@ -28,7 +28,7 @@ terraform plan -lock=false
 
 | Change | How |
 | --- | --- |
-| New repository | Add an entry to `repos.auto.tfvars`, open a PR, check the plan, merge. |
+| New repository | Add an entry to `repos.auto.tfvars`, open a PR, check the plan, merge. It is created with an initial commit on `main`; leave `default_branch` as `main` for new repos (rename the branch on GitHub first if you need another one). |
 | Change settings | Edit the entry. The plan shows the in-place update. |
 | Rename | Change the entry's key and add a `moved` block from `github_repository.this["old"]` to `github_repository.this["new"]` (and the same for `github_branch_default` / `github_branch_protection`). Without it, Terraform plans a new repository and is blocked by `prevent_destroy`. |
 | Bring an existing repository under management | Add its entry and an `import` block in [`imports.tf`](imports.tf). |
