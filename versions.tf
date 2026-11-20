@@ -6,5 +6,9 @@ terraform {
       source  = "integrations/github"
       version = "~> 6.13"
     }
+    netlify = {
+      source  = "netlify/netlify"
+      version = "~> 0.4.4"
+    }
   }
 }
