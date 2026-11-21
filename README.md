@@ -57,6 +57,7 @@ Repositories with `branch_protection` get, on their default branch: PR-only chan
 
 - `portfolio` requires its `check` CI job.
 - `github-infra` requires `plan` and sets `enforce_admins = false`, so the apply job can push the state commit to `main` with the owner's token. This also means the owner can bypass protection here; don't.
+- Required checks are `strict`: a PR branch must be up to date with `main` before it can merge, so checks run against what will land. After `main` moves, use **Update branch** on open PRs.
 - Branch protection on **private** repositories needs GitHub Pro. All repositories are currently public.
 
 ### Release branches
