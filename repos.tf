@@ -43,7 +43,7 @@ resource "github_branch_default" "this" {
 }
 
 resource "github_branch_protection" "default" {
-  for_each = { for name, repo in var.repos : name => repo if repo.branch_protection != null && !repo.archived }
+  for_each = { for name, repo in var.repos : name => repo if repo.branch_protection.enabled && !repo.archived }
 
   repository_id = github_repository.this[each.key].node_id
   pattern       = each.value.default_branch

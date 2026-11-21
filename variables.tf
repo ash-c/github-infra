@@ -28,8 +28,10 @@ variable "repos" {
     # Blocks deletion of and force pushes to release/* branches.
     protect_release_branches = optional(bool, true)
 
-    # Protects the default branch (on by default). Set to null to opt out.
+    # Protects the default branch. Terraform replaces an explicit null with the
+    # default, so opt out with { enabled = false }.
     branch_protection = optional(object({
+      enabled = optional(bool, true)
       # Required status check names, e.g. GitHub Actions job names.
       required_checks = optional(list(string), [])
       # false lets the owner (and CI using the owner's token) bypass the rules.
