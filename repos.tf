@@ -43,7 +43,7 @@ resource "github_branch_default" "this" {
 }
 
 resource "github_branch_protection" "default" {
-  for_each = { for name, repo in var.repos : name => repo if repo.branch_protection != null && !repo.archived }
+  for_each = { for name, repo in var.repos : name => repo if repo.branch_protection.enabled && !repo.archived }
 
   repository_id = github_repository.this[each.key].node_id
   pattern       = each.value.default_branch
@@ -52,10 +52,10 @@ resource "github_branch_protection" "default" {
   allows_deletions    = false
   allows_force_pushes = false
 
-  # Changes reach the branch only through pull requests. No approval is
-  # required because the owner is the only collaborator.
+  # Changes reach the branch only through pull requests with at least one
+  # approving review from a collaborator with write access.
   required_pull_request_reviews {
-    required_approving_review_count = 0
+    required_approving_review_count = 1
   }
 
   dynamic "required_status_checks" {

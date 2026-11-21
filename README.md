@@ -7,7 +7,7 @@ It also manages settings on existing Netlify sites: custom domains and non-secre
 ## How it works
 
 - Each repository is one entry in [`repos.auto.tfvars`](repos.auto.tfvars). Unset fields use the defaults in [`variables.tf`](variables.tf).
-- [`repos.tf`](repos.tf) creates `github_repository`, `github_branch_default`, `github_repository_ruleset.release_branches` (unless `protect_release_branches = false` or archived) and (where `branch_protection` is set) `github_branch_protection` for every entry.
+- [`repos.tf`](repos.tf) creates `github_repository`, `github_branch_default`, `github_repository_ruleset.release_branches` (unless `protect_release_branches = false` or archived) and (unless `branch_protection = { enabled = false }` or archived) `github_branch_protection` for every entry.
 - Each Netlify site is one entry in [`netlify.auto.tfvars`](netlify.auto.tfvars), keyed by Netlify site name. [`netlify.tf`](netlify.tf) looks the site up and manages `netlify_site_domain_settings` (only where `custom_domain` is set) and one `netlify_environment_variable` per `env_vars` entry. Sites are created in the Netlify UI, and build settings stay in each repository's `netlify.toml`, which overrides build settings set through the API. DNS is not managed.
 - State is the committed [`terraform.tfstate`](terraform.tfstate). There is no remote backend.
 - [`.github/workflows/terraform.yml`](.github/workflows/terraform.yml):
@@ -53,9 +53,9 @@ To stop managing a repository:
 
 ## Branch protection
 
-Repositories with `branch_protection` get, on their default branch: PR-only changes (0 approvals, since there is one owner), required status checks as listed, and no force pushes or deletion.
+Every non-archived repository gets, on its default branch: PR-only changes with at least one approving review, required status checks as listed, and no force pushes or deletion. Set `branch_protection = { enabled = false }` to opt a repository out (`null` doesn't work: Terraform replaces it with the default). GitHub doesn't count a PR author's own approval, so someone other than the author must approve (see [ADR 0003](docs/adr/0003-require-pr-approval-before-merge.md)).
 
-- `portfolio` requires its `check` CI job.
+- `portfolio` requires its `check` CI job and enforces the rules for admins, so the owner can't bypass the approval.
 - `github-infra` requires `plan` and sets `enforce_admins = false`, so the apply job can push the state commit to `main` with the owner's token. This also means the owner can bypass protection here; don't.
 - Required checks are `strict`: a PR branch must be up to date with `main` before it can merge, so checks run against what will land. After `main` moves, use **Update branch** on open PRs.
 - Branch protection on **private** repositories needs GitHub Pro. All repositories are currently public.
