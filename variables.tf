@@ -28,13 +28,13 @@ variable "repos" {
     # Blocks deletion of and force pushes to release/* branches.
     protect_release_branches = optional(bool, true)
 
-    # Protects the default branch. null leaves it unprotected.
+    # Protects the default branch (on by default). Set to null to opt out.
     branch_protection = optional(object({
       # Required status check names, e.g. GitHub Actions job names.
       required_checks = optional(list(string), [])
       # false lets the owner (and CI using the owner's token) bypass the rules.
       enforce_admins = optional(bool, true)
-    }))
+    }), {})
   }))
 
   validation {
