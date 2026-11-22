@@ -4,7 +4,15 @@ repos = {
   "portfolio" = {
     description = "Portfolio website for Ash Crockett, full-stack software engineer in Taranaki, NZ."
     branch_protection = {
-      required_checks = ["check"]
+      # The e2e matrix jobs need e2e-build and are skipped (treated as passing) if it fails.
+      required_checks = [
+        "check",
+        "e2e-build",
+        "e2e (chromium)",
+        "e2e (firefox)",
+        "e2e (webkit)",
+        "e2e (mobile-chromium)",
+      ]
     }
   }
 
