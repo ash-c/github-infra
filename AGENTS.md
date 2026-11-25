@@ -37,6 +37,18 @@ terraform plan -no-color -lock=false   # needs GITHUB_TOKEN and NETLIFY_API_TOKE
 - If Terraform or credentials aren't available locally, rely on the PR's CI run.
 - Never use `apply` as verification.
 
+## Dependency updates
+
+`scripts/deps.py` (Python 3, standard library) does the deterministic part of dependency maintenance and prints Markdown tables for PR descriptions (`--json` for raw data). Dependencies are the provider constraints in `versions.tf` with `.terraform.lock.hcl`, `TF_VERSION` in the workflows, and the SHA-pinned Actions (`# vX.Y.Z` comments).
+
+- `report`: GitHub Advisory Database matches for the versions in use, patch and minor updates within each dependency's current major, and available majors. Changes nothing.
+- `security`: bumps only the dependencies with a fixable advisory, to the newest release in their current major.
+- `update [--exclude a,b]`: bumps everything to the newest release in its current major. Providers go through `terraform init -upgrade` and the script warns if the lockfile's hash platforms change; Actions get the release's full commit SHA and a new version comment.
+- `check`: `terraform fmt -check -recursive -diff`, `init` and `validate`, as CI.
+- `plan-status <pr>`: reads the CI plan comment and exits non-zero unless it says "No changes." for the PR's current head.
+
+The script never takes a major, and a `0.x` minor counts as a major. It doesn't run `plan` or `apply`.
+
 ## CI
 
 [`.github/workflows/terraform.yml`](.github/workflows/terraform.yml):
