@@ -25,6 +25,11 @@ repos = {
     }
   }
 
+  "home-repo" = {
+    description = "Personal agent home: shared instructions, skills, and docs."
+    visibility  = "public"
+  }
+
   "latlng" = {
     default_branch = "master"
     archived       = true
