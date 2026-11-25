@@ -10,7 +10,7 @@ Terraform for the `ash-c` GitHub repositories and existing Netlify sites. [READM
 - `netlify.auto.tfvars` and `netlify.tf`: Netlify site settings, managed separately from the repositories.
 - `imports.tf`, `moved.tf`: import and moved blocks.
 - `terraform.tfstate`: committed state, written only by CI.
-- `docs/adr/`: decision records. Add one (copy `0000-template.md`) for significant changes.
+- `docs/adr/`: decision records. Add one here for significant changes, copying the sibling Home Repo template `../home-repo/docs/adr/0000-template.md`.
 
 ## Rules
 
