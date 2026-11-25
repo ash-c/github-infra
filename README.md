@@ -125,4 +125,4 @@ Create or rotate it alongside `GH_TOKEN`:
 
 ## Decisions
 
-See [`docs/adr/`](docs/adr). Add a new ADR (copy `0000-template.md`) for significant changes, such as a different backend.
+See [`docs/adr/`](docs/adr). Add a new ADR there for significant changes, such as a different backend, copying the sibling Home Repo template [`../home-repo/docs/adr/0000-template.md`](../home-repo/docs/adr/0000-template.md).
